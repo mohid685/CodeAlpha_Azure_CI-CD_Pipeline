@@ -1,0 +1,42 @@
+trigger:
+- main
+
+pool:
+  name: Default  # Use your self-hosted agent
+
+variables:
+  imageName: 'azure-pipeline-app'
+
+steps:
+
+# 1. Checkout code from the repo
+- task: Checkout@1
+  displayName: 'Checkout source'
+
+# 2. Set up Docker (on self-hosted, Docker must already be installed)
+- task: DockerInstaller@0
+  inputs:
+    dockerVersion: '17.09.0-ce'
+  displayName: 'Install Docker (if needed)'
+
+# 3. Build Docker image
+- task: Docker@2
+  displayName: 'Build Docker Image'
+  inputs:
+    containerRegistry: 'mohid-acr-connection'  # Must match your service connection name
+    repository: '$(imageName)'
+    command: 'build'
+    Dockerfile: '**/Dockerfile'
+    tags: 'latest'
+
+# 4. Push image to Azure Container Registry
+- task: Docker@2
+  displayName: 'Push to ACR'
+  inputs:
+    containerRegistry: 'mohid-acr-connection'
+    repository: '$(imageName)'
+    command: 'push'
+    tags: 'latest'
+
+# 5. Optional: Deploy or run container
+# Add a deployment task if needed (Kubernetes, Web App, etc.)
