@@ -1,0 +1,28 @@
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  imageName: 'azure-pipeline-app'
+
+steps:
+- task: DockerInstaller@0
+  inputs:
+    dockerVersion: '17.09.0-ce'
+
+- script: |
+    docker build -t $(imageName) .
+    docker tag $(imageName) mohidregistry.azurecr.io/$(imageName)
+  displayName: 'Build and Tag Docker Image'
+
+- task: Docker@2
+  inputs:
+    command: 'login'
+    containerRegistry: 'mohid-acr-connection'  # You’ll set this up next
+  displayName: 'Login to ACR'
+
+- script: |
+    docker push mohidregistry.azurecr.io/$(imageName)
+  displayName: 'Push Image to ACR'
