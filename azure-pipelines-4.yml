@@ -1,0 +1,37 @@
+trigger:
+- main
+
+pool:
+  name: Default  # Your self-hosted agent pool name
+
+variables:
+  imageName: 'azure-pipeline-app'
+
+steps:
+
+# 1. Checkout code from GitHub repo
+- checkout: self
+  displayName: 'Checkout source code'
+
+# ⚠️ DockerInstaller removed — not needed if Docker is already installed on the agent
+
+# 2. Build Docker image
+- task: Docker@2
+  displayName: 'Build Docker Image'
+  inputs:
+    containerRegistry: 'mohid-acr-connection'  # Make sure this matches EXACTLY in Service Connections
+    repository: '$(imageName)'
+    command: build
+    Dockerfile: '**/Dockerfile'
+    tags: |
+      latest
+
+# 3. Push Docker image to Azure Container Registry
+- task: Docker@2
+  displayName: 'Push Docker Image'
+  inputs:
+    containerRegistry: 'mohid-acr-connection'
+    repository: '$(imageName)'
+    command: push
+    tags: |
+      latest
